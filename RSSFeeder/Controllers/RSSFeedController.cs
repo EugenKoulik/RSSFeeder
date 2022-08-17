@@ -10,23 +10,26 @@ public class RSSFeedController : Controller
 {
     private readonly IWebHostEnvironment _environment;
 
+    private readonly int minFrequency = 5;
+
     public RSSFeedController(IWebHostEnvironment environment)
     {
         _environment = environment;
     }
     public ActionResult Index()
     {
-        var settings = XmlHelper.GetListOfFeedsSettings(Path.Combine(_environment.WebRootPath, "appSettings.xml"));
+        var settings = XmlHelper.GetFeedsSettingsFromFile(Path.Combine(_environment.WebRootPath, "appSettings.xml"));
         try
         {
             GetFeed(settings.NewsFeedLink);
         }
         catch (WebException exception)
         {
-            ViewBag.ErrorMessage = exception.Message;
+            ViewBag.Message = exception.Message;
         }
-
-        if (!string.IsNullOrEmpty(ViewBag.ErrorMessage)) return View();
+        
+        if (settings.UpdateFrequency < minFrequency) ViewBag.Message = $"Frequency must be more {minFrequency}";
+        if (!string.IsNullOrEmpty(ViewBag.Message)) return View();
         
         ViewBag.URL = settings.NewsFeedLink;
         ViewBag.UpdateFrequency = settings.UpdateFrequency;
@@ -35,36 +38,37 @@ public class RSSFeedController : Controller
         return View();
     }
 
-    protected void Timer1_Tick(object sender, EventArgs e)
-    {
-        Console.WriteLine("Жопа");
-    }
-    
     [HttpPost]
     public ActionResult Index(string rssUrl, int frequency)
     {
+        if (frequency < minFrequency)
+        {
+            ViewBag.Message = $"Frequency must be more {minFrequency}";
+            return View();
+        }
+
+        if (string.IsNullOrEmpty(rssUrl))
+        {
+            ViewBag.Message = $"Url is null!";
+            return View();
+        }
         try
         {
             ViewBag.RSSFeed = GetFeed(rssUrl);
             ViewBag.URL = rssUrl;
             ViewBag.UpdateFrequency = frequency;
         }
-        catch (WebException exception)
+        catch (Exception exception)
         {
-            ViewBag.ErrorMessage = exception.Message;
+            ViewBag.Message = exception.Message;
+            return View();
         }
-        
-        if (string.IsNullOrEmpty(ViewBag.ErrorMessage))
-        {
-            XmlHelper.WriteData(Path.Combine(_environment.WebRootPath, "appSettings.xml"), 
-                new FeedSettings(){UpdateFrequency = frequency, NewsFeedLink = rssUrl});
-        }
-        
+  
+        XmlHelper.WriteData(Path.Combine(_environment.WebRootPath, "appSettings.xml"), 
+            new FeedSettings(){UpdateFrequency = frequency, NewsFeedLink = rssUrl});
+
         return View();
     }
-
-    [HttpPost]
-    public ContentResult AjaxMethod(string rssUrl) => Content(DateTime.Now.ToString("f") + rssUrl);
 
     private static IEnumerable<RSSFeed> GetFeed(string url)
     {

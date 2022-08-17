@@ -5,7 +5,7 @@ namespace RSSFeeder;
 
 public class XmlHelper
 {
-    public static FeedSettings GetListOfFeedsSettings(string path)
+    public static FeedSettings GetFeedsSettingsFromFile(string path)
     {
         var xmlString = File.ReadAllText(path);
         using TextReader sr = new StringReader(xmlString);

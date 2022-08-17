@@ -7,7 +7,7 @@
 {  
     <input type="URL" name="RSSURL" placeholder="Enter RSS Feed URL Here..." class="form-control" value="@ViewBag.URL"/> 
     <br />  
-    <input type="text" name="Frequency" placeholder="Enter refresh seconds Here..." class="form-control" value="@ViewBag.UpdateFrequency"/>
+    <input type="text" name="Frequency" placeholder="Enter refresh seconds Here... (>= 5)" class="form-control" value="@ViewBag.UpdateFrequency"/>
     <br />  
     <button type="submit" class="btn btn-secondary"> Сохранить </button>
 }  
@@ -22,7 +22,7 @@
     </tr>
     </thead>
     <tbody>
-    @if (ViewBag.RSSFeed != null)
+    @if (ViewBag.RSSFeed != null && ViewBag.Message == null)
     {
 
         foreach (var item in ViewBag.RSSFeed)
@@ -35,40 +35,15 @@
             </tr>
         }
     }
+    else
+    {
+        <script type="text/javascript">  
+                window.onload = function () {  
+                    alert("@ViewBag.Message");  
+                };  
+            </script> 
+    }
     </tbody>
 </table>
-
-<asp:Timer ID="Timer1" runat="server" Interval="10" ontick="Timer1_Tick">
-    </asp:Timer> 
-        <asp:UpdatePanel ID="UpdatePanel1" runat="server">
-            <ContentTemplate>
-                <asp:Label ID="Label1" runat="server"></asp:Label>
-            </ContentTemplate>
-        <Triggers>
-            <asp:AsyncPostBackTrigger ControlID="Timer1" EventName="Tick"></asp:AsyncPostBackTrigger>
-        </Triggers>
-</asp:UpdatePanel>
-
-
-<script>
-
-    setInterval(checkValidId, 2000);
-    
-    function checkValidId(url)
-    {
-        $.ajax({
-             url: "/RSSFeed/AjaxMethod",
-             type: 'POST',
-             contentType: 'application/json;',
-             data: JSON.stringify({ url: url }),
-             success: function (valid)
-             {
-                 
-
-             }
-        });
-    }
-    
-</script>
 
 
